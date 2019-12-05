@@ -1,0 +1,30 @@
+From c152d5a633876ff01ae69bd69d25c9ec08d0bbcb Mon Sep 17 00:00:00 2001
+From: Michal Schmidt <mschmidt@redhat.com>
+Date: Fri, 3 Nov 2017 11:49:50 +0100
+Subject: [PATCH 1/2] mvapich23: unbundle contrib/hwloc
+
+---
+ Makefile.in | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index 0d9ec512f5..ff3af667a4 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -3029,10 +3029,10 @@ bin_PROGRAMS = $(am__EXEEXT_1) src/env/mpichversion$(EXEEXT) \
+ @BUILD_F77_BINDING_TRUE@@BUILD_PROFILING_LIB_TRUE@am__append_173 = -DMPICH_MPI_FROM_PMPI -DUSE_ONLY_MPI_NAMES
+ @BUILD_F77_BINDING_TRUE@@BUILD_FC_BINDING_TRUE@am__append_174 = $(mpi_fc_sources)
+ @BUILD_CXX_BINDING_TRUE@am__append_175 = lib/lib@MPICXXLIBNAME@.la
+-@BUILD_OSU_MVAPICH_TRUE@am__append_176 = contrib/hwloc
++@BUILD_OSU_MVAPICH_TRUE@am__append_176 =
+ @BUILD_OSU_MVAPICH_TRUE@am__append_177 = src/env/mpiname src/util/mv2_ckpt_rebuild osu_benchmarks
+-@BUILD_OSU_MVAPICH_TRUE@am__append_178 = -Icontrib/hwloc/include/ -I$(top_srcdir)/contrib/hwloc/include
+-@BUILD_OSU_MVAPICH_TRUE@am__append_179 = contrib/hwloc/src/libhwloc_embedded.la
++@BUILD_OSU_MVAPICH_TRUE@am__append_178 =
++@BUILD_OSU_MVAPICH_TRUE@am__append_179 = -lhwloc
+ @BUILD_COVERAGE_TRUE@am__append_180 = coverage-clean
+ subdir = .
+ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+-- 
+2.13.6
+
