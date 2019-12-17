@@ -66,7 +66,7 @@ Provides development headers and libraries for mvapich2-psm2.
 %package psm2-help
 Summary:         Documentation files for mvapich2-psm2
 
-%description help
+%description psm2-help
 Help and additional documentation for mvapich2-psm2.
 %endif
 
