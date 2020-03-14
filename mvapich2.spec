@@ -2,7 +2,7 @@
 
 Name:            mvapich2
 Version:         2.3
-Release:         6
+Release:         7
 Summary:         OSU MVAPICH2 MPI package
 License:         BSD and MIT
 URL:             http://mvapich.cse.ohio-state.edu
@@ -12,7 +12,7 @@ Source2:         mvapich2.macros.in
 Patch0001:       0001-mvapich23-unbundle-contrib-hwloc.patch
 Patch0002:       0002-mvapich23-unbundle-osu_benchmarks.patch
 BuildRequires:   gcc-gfortran libibumad-devel librdmacm-devel python3-devel
-BuildRequires:   rpm-mpi-hooks bison flex autoconf automake libtool
+BuildRequires:   bison flex autoconf automake libtool
 BuildRequires:   perl-Digest-MD5 hwloc-devel libibverbs-devel >= 1.1.3 libibmad-devel
 
 %ifarch x86_64
@@ -253,5 +253,8 @@ cd ..
 
 
 %changelog
+* Sat Mar 14 2020 sunguoshuai <sunguoshuai@huawei.com> - 2.3-7
+- del rpm-mpi-hooks deps.
+
 * Fri Nov 22 2019 sunguoshuai <sunguoshuai@huawei.com> - 2.3-6
 - Package init.
