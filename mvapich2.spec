@@ -2,7 +2,7 @@
 
 Name:            mvapich2
 Version:         2.3
-Release:         8
+Release:         7
 Summary:         OSU MVAPICH2 MPI package
 License:         BSD and MIT
 URL:             http://mvapich.cse.ohio-state.edu
@@ -11,9 +11,9 @@ Source1:         mvapich2.module.in
 Source2:         mvapich2.macros.in
 Patch0001:       0001-mvapich23-unbundle-contrib-hwloc.patch
 Patch0002:       0002-mvapich23-unbundle-osu_benchmarks.patch
-BuildRequires:   gcc-gfortran python3-devel
+BuildRequires:   gcc-gfortran libibumad-devel librdmacm-devel python3-devel
 BuildRequires:   bison flex autoconf automake libtool
-BuildRequires:   perl-Digest-MD5 hwloc-devel rdma-core-devel
+BuildRequires:   perl-Digest-MD5 hwloc-devel libibverbs-devel >= 1.1.3 libibmad-devel
 
 %ifarch x86_64
 BuildRequires:   libpsm2-devel >= 10.3.58
@@ -28,7 +28,7 @@ Omni-Path, Ethernet/iWARP, RoCE.
 %package devel
 Summary:         Development files for mvapich2
 Provides:        mpi-devel
-Requires:        rdma-core-devel
+Requires:        librdmacm-devel libibverbs-devel libibumad-devel
 Requires:        mvapich2 = %{version}-%{release} gcc-gfortran
 
 %description devel
@@ -57,7 +57,7 @@ for Omni-Path adapters.
 %package psm2-devel
 Summary:         Development files for mvapich2-psm2
 Provides:        mpi-devel
-Requires:        rdma-core-devel
+Requires:        librdmacm-devel libibverbs-devel libibumad-devel
 Requires:        mvapich2-psm2 = %{version}-%{release} gcc-gfortran
 
 %description psm2-devel
@@ -253,9 +253,6 @@ cd ..
 
 
 %changelog
-* Sun Apr 26 2020 yanzhihua <yanzhihua4@huawei.com> - 2.3-8
-- Synchronize buildrequire.
-
 * Sat Mar 14 2020 sunguoshuai <sunguoshuai@huawei.com> - 2.3-7
 - del rpm-mpi-hooks deps.
 
