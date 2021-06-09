@@ -2,7 +2,7 @@
 
 Name:            mvapich2
 Version:         2.3
-Release:         9
+Release:         10
 Summary:         OSU MVAPICH2 MPI package
 License:         BSD and MIT
 URL:             http://mvapich.cse.ohio-state.edu
@@ -12,7 +12,7 @@ Source2:         mvapich2.macros.in
 Patch0001:       0001-mvapich23-unbundle-contrib-hwloc.patch
 Patch0002:       0002-mvapich23-unbundle-osu_benchmarks.patch
 Patch0003:       0003-mvapich23-replace-deprecated-sys_siglist-with-strsignal.patch
-BuildRequires:   gcc-gfortran python3-devel
+BuildRequires:   gcc-gfortran python3-devel gcc-c++
 BuildRequires:   bison flex autoconf automake libtool
 BuildRequires:   perl-Digest-MD5 hwloc-devel rdma-core-devel
 
@@ -254,6 +254,9 @@ cd ..
 
 
 %changelog
+* Wed July 9 2021 zhaoyao <zhaoyao32@huawei.com> - 2.3-10
+- fix build error: Abording because C++ compiler does not work.
+
 * Sat Mar 27 2021 zhanghua <zhanghua40@huawei.com> - 2.3-9
 - fix build error, replace deprecated sys_siglist with strsignal
 
