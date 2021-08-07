@@ -1,0 +1,28 @@
+From 13f002618fe9528d193869b6bccf9ddf00de9e84 Mon Sep 17 00:00:00 2001
+From: sunguoshuai <sunguoshuai@huawei.com>
+Date: Sat, 7 Aug 2021 15:48:15 +0800
+Subject: [PATCH] fix undefined reference in psm2 files
+
+---
+ src/mpid/ch3/channels/psm/src/mpidi_calls.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/mpid/ch3/channels/psm/src/mpidi_calls.c b/src/mpid/ch3/channels/psm/src/mpidi_calls.c
+index bdca286..d016ebf 100644
+--- a/src/mpid/ch3/channels/psm/src/mpidi_calls.c
++++ b/src/mpid/ch3/channels/psm/src/mpidi_calls.c
+@@ -14,6 +14,11 @@
+ #include "psmpriv.h"
+ #include <pthread.h>
+ 
++int (*psm_lock_fn)(pthread_spinlock_t *);
++int (*psm_unlock_fn)(pthread_spinlock_t *);
++int (*psm_progress_lock_fn)(pthread_spinlock_t *);
++int (*psm_progress_unlock_fn)(pthread_spinlock_t *);
++progress_hook_slot_t progress_hooks[MAX_PROGRESS_HOOKS];
+ 
+ #undef FUNCNAME
+ #define FUNCNAME MPIDI_CH3_Init
+-- 
+2.30.0
+

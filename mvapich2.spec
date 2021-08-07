@@ -2,7 +2,7 @@
 
 Name:            mvapich2
 Version:         2.3
-Release:         10
+Release:         11
 Summary:         OSU MVAPICH2 MPI package
 License:         BSD and MIT
 URL:             http://mvapich.cse.ohio-state.edu
@@ -12,6 +12,12 @@ Source2:         mvapich2.macros.in
 Patch0001:       0001-mvapich23-unbundle-contrib-hwloc.patch
 Patch0002:       0002-mvapich23-unbundle-osu_benchmarks.patch
 Patch0003:       0003-mvapich23-replace-deprecated-sys_siglist-with-strsignal.patch
+Patch0004:       gfortran10-allows-mismatched-arguements-1.patch
+Patch0005:       gfortran10-allows-mismatched-arguements-2.patch
+Patch0006:       fix-multiple-definition-error.patch
+Patch0007:       fix-undefined-reference.patch
+Patch0008:       fix-psm2-multiple-definition.patch
+Patch0009:       fix-undefined-reference-in-psm2-files.patch
 BuildRequires:   gcc-gfortran python3-devel gcc-c++
 BuildRequires:   bison flex autoconf automake libtool
 BuildRequires:   perl-Digest-MD5 hwloc-devel rdma-core-devel
@@ -254,6 +260,9 @@ cd ..
 
 
 %changelog
+* Sat 07 Aug 2021 sunguoshuai <sunguoshuai@huawei.com> - 2.3-11
+- fix build error with gcc 10,include allow mismatched arguement and multiple definition
+
 * Wed July 9 2021 zhaoyao <zhaoyao32@huawei.com> - 2.3-10
 - fix build error: Abording because C++ compiler does not work.
 
