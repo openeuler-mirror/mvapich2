@@ -1,0 +1,114 @@
+From 6b9fa9eff2f3e313347294f54c0179582f70411d Mon Sep 17 00:00:00 2001
+From: sunguoshuai <sunguoshuai@huawei.com>
+Date: Fri, 6 Aug 2021 16:52:58 +0800
+Subject: [PATCH] fix multiple definition error
+
+---
+ src/include/coll_shmem.h                           |  2 +-
+ src/include/coll_shmem_internal.h                  | 14 +++++++-------
+ src/mpi/coll/allgatherv_tuning.h                   |  2 +-
+ src/mpid/ch3/channels/common/include/mem_hooks.h   |  2 +-
+ .../ch3/channels/mrail/include/mpidi_ch3_impl.h    |  2 +-
+ .../channels/mrail/src/gen2/mpidi_ch3_rdma_post.h  |  2 +-
+ 6 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/src/include/coll_shmem.h b/src/include/coll_shmem.h
+index 1da9c7f..24ad19f 100644
+--- a/src/include/coll_shmem.h
++++ b/src/include/coll_shmem.h
+@@ -382,7 +382,7 @@ int create_sharp_comm(MPI_Comm, int, int);
+ 
+ 
+ /*Fn pointers for collectives */
+-int (*reduce_fn)(const void *sendbuf,
++extern int (*reduce_fn)(const void *sendbuf,
+                              void *recvbuf,
+                              int count,
+                              MPI_Datatype datatype,
+diff --git a/src/include/coll_shmem_internal.h b/src/include/coll_shmem_internal.h
+index 84bac47..54eb456 100644
+--- a/src/include/coll_shmem_internal.h
++++ b/src/include/coll_shmem_internal.h
+@@ -30,12 +30,12 @@ extern int mv2_shmem_coll_num_comm;
+ extern int mv2_gather_status_alignment;
+ extern int mv2_bcast_status_alignment;
+ extern int mv2_max_limic_comms;
+-volatile int *child_complete_bcast;   /* use for initial synchro */
+-volatile int *child_complete_gather;   /* use for initial synchro */
+-volatile int *root_complete_gather;  
+-volatile int *barrier_gather;
+-volatile int *barrier_bcast;
+-volatile int *shmem_coll_block_status;
++extern volatile int *child_complete_bcast;   /* use for initial synchro */
++extern volatile int *child_complete_gather;   /* use for initial synchro */
++extern volatile int *root_complete_gather;  
++extern volatile int *barrier_gather;
++extern volatile int *barrier_bcast;
++extern volatile int *shmem_coll_block_status;
+ #if defined(_SMP_LIMIC_)
+ volatile int *limic_progress;
+ #endif
+@@ -98,7 +98,7 @@ typedef struct {
+         SHMEM_COLL_STATUS_ARRAY_SIZE + LIMIC_COLL_SYNC_ARRAY_SIZE + \
+         SHMEM_BCAST_SYNC_ARRAY_SIZE)
+ 
+-shmem_coll_region *shmem_coll;
++extern shmem_coll_region *shmem_coll;
+ 
+ 
+ 
+diff --git a/src/mpi/coll/allgatherv_tuning.h b/src/mpi/coll/allgatherv_tuning.h
+index ee3bcbe..3a3a100 100644
+--- a/src/mpi/coll/allgatherv_tuning.h
++++ b/src/mpi/coll/allgatherv_tuning.h
+@@ -37,7 +37,7 @@
+  *            use ring since 8192 bytes
+  */
+ 
+-char *mv2_user_allgatherv_inter;
++extern char *mv2_user_allgatherv_inter;
+ 
+ typedef struct {
+     int min;
+diff --git a/src/mpid/ch3/channels/common/include/mem_hooks.h b/src/mpid/ch3/channels/common/include/mem_hooks.h
+index 1d8256e..6a151cd 100644
+--- a/src/mpid/ch3/channels/common/include/mem_hooks.h
++++ b/src/mpid/ch3/channels/common/include/mem_hooks.h
+@@ -39,7 +39,7 @@ typedef struct {
+     munmap_t    munmap;
+ } mvapich2_malloc_info_t;
+ 
+-mvapich2_malloc_info_t mvapich2_minfo;
++extern mvapich2_malloc_info_t mvapich2_minfo;
+ 
+ void mvapich2_mem_unhook(void *mem, size_t size);
+ int  mvapich2_minit(void);
+diff --git a/src/mpid/ch3/channels/mrail/include/mpidi_ch3_impl.h b/src/mpid/ch3/channels/mrail/include/mpidi_ch3_impl.h
+index bb5401b..b188d33 100644
+--- a/src/mpid/ch3/channels/mrail/include/mpidi_ch3_impl.h
++++ b/src/mpid/ch3/channels/mrail/include/mpidi_ch3_impl.h
+@@ -390,7 +390,7 @@ int MPIDI_CH3I_MRAIL_CM_Dealloc(MPIDI_PG_t * pg);
+ void MPIDI_CH3I_Cleanup_cqes(void);
+ 
+ /*flag to check if cq_poll is success in the progressing loop*/
+-int cq_poll_completion;
++extern int cq_poll_completion;
+ 
+ #ifdef CKPT
+ 
+diff --git a/src/mpid/ch3/channels/mrail/src/gen2/mpidi_ch3_rdma_post.h b/src/mpid/ch3/channels/mrail/src/gen2/mpidi_ch3_rdma_post.h
+index ce1eb95..fecea16 100644
+--- a/src/mpid/ch3/channels/mrail/src/gen2/mpidi_ch3_rdma_post.h
++++ b/src/mpid/ch3/channels/mrail/src/gen2/mpidi_ch3_rdma_post.h
+@@ -292,7 +292,7 @@ int MPIDI_CH3I_MRAILI_Get_next_vbuf(struct MPIDI_VC** vc_ptr, vbuf** vbuf_ptr);
+ 
+ int MPIDI_CH3I_MRAILI_Waiting_msg(struct MPIDI_VC* vc, vbuf**, int blocking);
+ 
+-int (*MPIDI_CH3I_MRAILI_Cq_poll) (vbuf**, struct MPIDI_VC*, int, int);
++extern int (*MPIDI_CH3I_MRAILI_Cq_poll) (vbuf**, struct MPIDI_VC*, int, int);
+ 
+ void MRAILI_Send_noop(struct MPIDI_VC* c, int rail);
+ 
+-- 
+2.30.0
+

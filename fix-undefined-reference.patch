@@ -1,0 +1,89 @@
+From feb93bab18c9f70b33b480ae5c7878266f795f36 Mon Sep 17 00:00:00 2001
+From: sunguoshuai <sunguoshuai@huawei.com>
+Date: Sat, 7 Aug 2021 10:23:43 +0800
+Subject: [PATCH] test2
+
+---
+ src/mpi/coll/allreduce_osu.c                        | 7 +++++++
+ src/mpi/coll/ch3_shmem_coll.c                       | 8 ++++++++
+ src/mpid/ch3/channels/common/src/memory/mem_hooks.c | 1 +
+ src/mpid/ch3/channels/mrail/src/rdma/ch3_init.c     | 1 +
+ src/mpid/ch3/channels/mrail/src/rdma/ch3_progress.c | 1 +
+ 5 files changed, 18 insertions(+)
+
+diff --git a/src/mpi/coll/allreduce_osu.c b/src/mpi/coll/allreduce_osu.c
+index 611b199..dd5e192 100644
+--- a/src/mpi/coll/allreduce_osu.c
++++ b/src/mpi/coll/allreduce_osu.c
+@@ -30,6 +30,13 @@
+ extern int mv2_sharp_tuned_msg_size;
+ #endif
+ 
++/*Fn pointers for collectives */
++int (*reduce_fn)(const void *sendbuf,
++		void *recvbuf,
++		int count,
++		MPI_Datatype datatype,
++		MPI_Op op, int root, MPID_Comm * comm_ptr, MPIR_Errflag_t *errflag);
++
+ MPIR_T_PVAR_ULONG2_COUNTER_DECL_EXTERN(MV2, mv2_coll_allreduce_sharp);
+ MPIR_T_PVAR_ULONG2_COUNTER_DECL_EXTERN(MV2, mv2_coll_allreduce_shm_rd);
+ MPIR_T_PVAR_ULONG2_COUNTER_DECL_EXTERN(MV2, mv2_coll_allreduce_shm_rs);
+diff --git a/src/mpi/coll/ch3_shmem_coll.c b/src/mpi/coll/ch3_shmem_coll.c
+index 94129e4..a53831c 100644
+--- a/src/mpi/coll/ch3_shmem_coll.c
++++ b/src/mpi/coll/ch3_shmem_coll.c
+@@ -78,6 +78,14 @@
+ #endif
+ #include "debug_utils.h"
+ 
++shmem_coll_region *shmem_coll;
++volatile int *child_complete_bcast;   /* use for initial synchro */
++volatile int *child_complete_gather;   /* use for initial synchro */
++volatile int *root_complete_gather;  
++volatile int *barrier_gather;
++volatile int *barrier_bcast;
++volatile int *shmem_coll_block_status;
++
+ /* 
+ === BEGIN_MPI_T_CVAR_INFO_BLOCK ===
+ 
+diff --git a/src/mpid/ch3/channels/common/src/memory/mem_hooks.c b/src/mpid/ch3/channels/common/src/memory/mem_hooks.c
+index 5b98b71..c2faf2f 100644
+--- a/src/mpid/ch3/channels/common/src/memory/mem_hooks.c
++++ b/src/mpid/ch3/channels/common/src/memory/mem_hooks.c
+@@ -38,6 +38,7 @@
+ 
+ #define PT_TEST_ALLOC_SIZE (64)
+ static int mem_hook_init = 0;
++mvapich2_malloc_info_t mvapich2_minfo;
+ 
+ #if !(defined(HAVE_SYSCALL) && defined(__NR_munmap))
+ #include <dlfcn.h>
+diff --git a/src/mpid/ch3/channels/mrail/src/rdma/ch3_init.c b/src/mpid/ch3/channels/mrail/src/rdma/ch3_init.c
+index ee31526..dc861fb 100644
+--- a/src/mpid/ch3/channels/mrail/src/rdma/ch3_init.c
++++ b/src/mpid/ch3/channels/mrail/src/rdma/ch3_init.c
+@@ -32,6 +32,7 @@ int (*perform_blocking_progress) (int hca_num, int num_cqs);
+ void (*handle_multiple_cqs) (int num_cqs, int cq_choice, int is_send_completion);
+ extern int MPIDI_Get_local_host(MPIDI_PG_t *pg, int our_pg_rank);
+ extern void ib_finalize_rdma_cm(int pg_rank, MPIDI_PG_t *pg);
++int (*MPIDI_CH3I_MRAILI_Cq_poll) (vbuf**, struct MPIDI_VC*, int, int);
+ 
+ #undef FUNCNAME
+ #define FUNCNAME split_type
+diff --git a/src/mpid/ch3/channels/mrail/src/rdma/ch3_progress.c b/src/mpid/ch3/channels/mrail/src/rdma/ch3_progress.c
+index b83bea2..53c56f6 100644
+--- a/src/mpid/ch3/channels/mrail/src/rdma/ch3_progress.c
++++ b/src/mpid/ch3/channels/mrail/src/rdma/ch3_progress.c
+@@ -76,6 +76,7 @@ extern int MPIDI_CH3_PktHandler_Init_MV2();
+ 
+ extern volatile int *rdma_cm_iwarp_msg_count;
+ extern volatile int *rdma_cm_connect_count;
++int cq_poll_completion;
+ 
+ #ifdef CKPT
+ static int cm_handle_reactivation_complete();
+-- 
+2.30.0
+
