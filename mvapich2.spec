@@ -1,23 +1,15 @@
 %{!?python3_sitearch: %global python3_sitearch %(%{__python3} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:            mvapich2
-Version:         2.3
-Release:         11
+Version:         2.3.6
+Release:         1
 Summary:         OSU MVAPICH2 MPI package
 License:         BSD and MIT
 URL:             http://mvapich.cse.ohio-state.edu
 Source:          http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2-%{version}.tar.gz
 Source1:         mvapich2.module.in
 Source2:         mvapich2.macros.in
-Patch0001:       0001-mvapich23-unbundle-contrib-hwloc.patch
-Patch0002:       0002-mvapich23-unbundle-osu_benchmarks.patch
-Patch0003:       0003-mvapich23-replace-deprecated-sys_siglist-with-strsignal.patch
-Patch0004:       gfortran10-allows-mismatched-arguements-1.patch
-Patch0005:       gfortran10-allows-mismatched-arguements-2.patch
-Patch0006:       fix-multiple-definition-error.patch
-Patch0007:       fix-undefined-reference.patch
-Patch0008:       fix-psm2-multiple-definition.patch
-Patch0009:       fix-undefined-reference-in-psm2-files.patch
+Patch0010:       add-riscv-support.patch
 BuildRequires:   gcc-gfortran python3-devel gcc-c++
 BuildRequires:   bison flex autoconf automake libtool
 BuildRequires:   perl-Digest-MD5 hwloc-devel rdma-core-devel
@@ -77,147 +69,131 @@ Summary:         Documentation files for mvapich2-psm2
 Help and additional documentation for mvapich2-psm2.
 %endif
 
+%define module_name mvapich2%{?pack_suff}
+%define p_prefix /usr/%_lib/mpi/gcc/%{module_name}
+%define p_bindir  %{p_prefix}/bin
+%define p_datadir %{p_prefix}/share
+%define p_includedir %{p_prefix}/include
+%define p_mandir  %{p_datadir}/man
+%define p_libdir  %{p_prefix}/%{_lib}
+%define p_libexecdir %{p_prefix}/%{_lib}
+%define _moduledir /usr/share/modules/gnu-%{module_name}
+%define package_name mvapich2%{?pack_suff}
+
 %prep
-%autosetup -n %{name}-%{version} -p1
-rm -r contrib/ limic2-0.5.6/ osu_benchmarks/
+%setup -q -n mvapich2-%{version}%{?rc_ver}
+cp /usr/share/automake*/config.* .
 
-find . -name configure -exec \
-    sed -i -r 's/(hardcode_into_libs)=.*$/\1=no/' '{}' ';'
-
-mkdir .default
-mv * .default
-mv .default default
-
-%ifarch x86_64
-cp -pr default psm2
-%endif
-
+%patch10 -p1
 
 %build
 %set_build_flags
-export AR=ar
+PERL_USE_UNSAFE_INC=1 ./autogen.sh
 
+%configure \
+    --prefix=%{p_prefix} \
+    --exec-prefix=%{p_prefix} \
+    --datadir=%{p_datadir} \
+    --bindir=%{p_bindir} \
+    --includedir=%{p_includedir} \
+    --libdir=%{p_libdir} \
+    --libexecdir=%{p_libexecdir} \
+    --mandir=%{p_mandir} \
+   --docdir=%{_datadir}/doc/%{name} \
+   --disable-wrapper-rpath \
+   --enable-yield=sched_yield \
 %ifarch x86_64
-cd psm2
-%configure --prefix=%{_libdir}/mvapich2-psm2 --exec-prefix=%{_libdir}/mvapich2-psm2 \
-    --bindir=%{_libdir}/mvapich2-psm2/bin --sbindir=%{_libdir}/mvapich2-psm2/bin \
-    --libdir=%{_libdir}/mvapich2-psm2/lib --mandir=%{_mandir}/mvapich2-psm2-x86_64 \
-    --includedir=%{_includedir}/mvapich2-psm2-x86_64 \
-    --sysconfdir=%{_sysconfdir}/mvapich2-psm2-x86_64 --datarootdir=%{_datadir}/mvapich2-psm2 \
-    --docdir=%{_docdir}/mvapich2 --enable-error-checking=runtime --enable-timing=none \
-    --enable-g=mem,dbg,meminit --enable-fast=all --enable-shared --enable-static \
-    --enable-fortran=all --enable-cxx --with-fuse=no --disable-silent-rules --disable-wrapper-rpath \
-    --with-hwloc-prefix=system --with-device=ch3:psm --with-ftb=no --with-blcr=no \
-    CC=gcc CFLAGS="-m64 -O3 -fno-strict-aliasing %{build_cflags} $XFLAGS" CXX=g++ \
-    CXXFLAGS="-m64 -O3 %{build_cflags} $XFLAGS" FC=gfortran FCFLAGS="-m64 %{build_cflags} \
-    $XFLAGS" F77=gfortran FFLAGS="-m64 %{build_cflags} $XFLAGS" LDFLAGS="%{build_ldflags}"
-
-find . -name libtool -exec \
-    sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
-            s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' '{}' ';'
-%make_build
-cd ..
+   --with-device=ch3:psm \
+   --with-psm2=/usr \
 %endif
+  --without-mpe
 
-%global namearch mvapich2-%{_arch}
-cd default
-%configure --prefix=%{_libdir}/mvapich2 --exec-prefix=%{_libdir}/mvapich2 \
-    --bindir=%{_libdir}/mvapich2/bin --sbindir=%{_libdir}/mvapich2/bin \
-    --libdir=%{_libdir}/mvapich2/lib --mandir=%{_mandir}/%{namearch} \
-    --includedir=%{_includedir}/%{namearch} --sysconfdir=%{_sysconfdir}/%{namearch} \
-    --datarootdir=%{_datadir}/mvapich2 --docdir=%{_docdir}/mvapich2 \
-    --enable-error-checking=runtime --enable-timing=none --enable-g=mem,dbg,meminit \
-    --enable-fast=all --enable-shared --enable-static --enable-fortran=all --enable-cxx \
-    --disable-silent-rules --disable-wrapper-rpath --with-hwloc-prefix=system --with-ftb=no \
-    --with-blcr=no --with-fuse=no \
-    CC=gcc CFLAGS="-O3 -fno-strict-aliasing %{build_cflags} $XFLAGS" CXX=g++  \
-    CXXFLAGS="-O3 %{build_cflags} $XFLAGS" FC=gfortran FCFLAGS="%{build_cflags} $XFLAGS" \
-    F77=gfortran  FFLAGS="%{build_cflags} $XFLAGS" LDFLAGS="%{build_ldflags}"
-
-find . -name libtool -exec \
-    sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g;
-            s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' '{}' ';'
-%make_build
-cd ..
+make %{?_smp_mflags} V=1
 
 %install
-finish_install() {
-        local LIBNAME="$1"
-        local NAMEARCH="$1-%{_arch}"
-        %delete_la
-        install -d %{buildroot}%{_mandir}/$NAMEARCH/man{2,4,5,6,7,8,9,n}
-        install -d %{buildroot}/%{_fmoddir}/$1$4
-        install -d %{buildroot}/%{python3_sitearch}/$1
-        install -d %{buildroot}%{_sysconfdir}/modulefiles/mpi
-        sed "s#@LIBDIR@#%{_libdir}/$1#g;
-             s#@ETCDIR@#%{_sysconfdir}/$NAMEARCH#g;
-             s#@FMODDIR@#%{_fmoddir}/$1$4#g;
-             s#@INCDIR@#%{_includedir}/$NAMEARCH#g;
-             s#@MANDIR@#%{_mandir}/$NAMEARCH#g;
-             s#@PYSITEARCH@#%{python3_sitearch}/$1#g;
-             s#@COMPILER@#$NAMEARCH#g;
-             s#@SUFFIX@#_$1#g" < $2 \
-                > %{buildroot}%{_sysconfdir}/modulefiles/mpi/$NAMEARCH
+make DESTDIR=%{buildroot} V=1 install
 
-        install -d %{buildroot}%{_sysconfdir}/rpm
-        sed "s#@MACRONAME@#${LIBNAME//[-.]/_}#g;
-             s#@MODULENAME@#$NAMEARCH#" < $3 \
-                > %{buildroot}/%{_sysconfdir}/rpm/macros.$NAMEARCH
+rm -f %{buildroot}%{p_libdir}/libfmpich.la \
+      %{buildroot}%{p_libdir}/libmpich.la \
+      %{buildroot}%{p_libdir}/libmpichcxx.la \
+      %{buildroot}%{p_libdir}/libmpichf90.la \
+      %{buildroot}%{p_libdir}/libmpl.la \
+      %{buildroot}%{p_libdir}/libopa.la \
+      %{buildroot}%{p_libdir}/libmpi.la \
+      %{buildroot}%{p_libdir}/libmpicxx.la \
+      %{buildroot}%{p_libdir}/libmpifort.la
+install -m 0755 -d %{buildroot}%{_datadir}/doc/%{name}
+install -m 0644 COPYRIGHT* %{buildroot}%{_datadir}/doc/%{name}
+install -m 0644 CHANGE* %{buildroot}%{_datadir}/doc/%{name}
+
+install -m 0755 -d %{buildroot}%{_bindir}
+sed -e 's,prefix,%p_prefix,g' -e 's,libdir,%{p_libdir},g' %{S:1} > %{buildroot}%{p_bindir}/mpivars.sh
+sed -e 's,prefix,%p_prefix,g' -e 's,libdir,%{p_libdir},g' %{S:2} > %{buildroot}%{p_bindir}/mpivars.csh
+
+mkdir -p %{buildroot}%{_moduledir}
+
+cat << EOF > %{buildroot}%{_moduledir}/%{version}
+#%%Module
+proc ModulesHelp { } {
+        global dotversion
+        puts stderr "\tLoads the gnu - mvapich2 %{version}  Environment"
 }
 
-install -d %{buildroot}%{_docdir}/mvapich2
+module-whatis  "Loads the gnu mvapich2 %{version} Environment."
+conflict gnu-mvapich2
+prepend-path PATH %{%p_bindir}
+prepend-path INCLUDE %{p_includedir}
+prepend-path INCLUDE %{p_libdir}
+prepend-path MANPATH %{p_mandir}
+prepend-path LD_LIBRARY_PATH %{p_libdir}
 
-%ifarch x86_64
-cd psm2
-%make_install
-finish_install mvapich2-psm2 %SOURCE1 %SOURCE2 ""
-cd ..
-%endif
+EOF
 
-cd default
-%make_install
-finish_install mvapich2 %SOURCE1 %SOURCE2 ""
-cd ..
+cat << EOF > %{buildroot}%{_moduledir}/.version
+#%%Module1.0
+set ModulesVersion "%{version}"
+
+EOF
 
 %global namearch mvapich2-%{_arch}
 %files
-%dir %{_libdir}/mvapich2
-%dir %{_libdir}/mvapich2/bin
-%dir %{_libdir}/mvapich2/lib
-%dir %{_fmoddir}/mvapich2
-%dir %{python3_sitearch}/mvapich2
-
-%{_libdir}/mvapich2/bin/hydra_*
-%{_libdir}/mvapich2/bin/mpichversion
-%{_libdir}/mvapich2/bin/mpiexec*
-%{_libdir}/mvapich2/bin/mpiname
-%{_libdir}/mvapich2/bin/mpirun*
-%{_libdir}/mvapich2/bin/mpispawn
-%{_libdir}/mvapich2/bin/mpivars
-%{_libdir}/mvapich2/bin/parkill
-%{_libdir}/mvapich2/lib/*.so.*
-%{_sysconfdir}/modulefiles/mpi/%{namearch}
+%defattr(-, root, root)
+%dir /usr/%_lib/mpi
+%dir /usr/%_lib/mpi/gcc
+%dir /usr/share/modules
+%dir %{_moduledir}
+%{_moduledir}
+%doc %{_datadir}/doc/%{name}/COPYRIGHT*
+%doc %{_datadir}/doc/%{name}/CHANGE*
+%dir %{p_prefix}
+%dir %{p_bindir}
+%dir %{p_datadir}
+%dir %{p_includedir}
+%dir %{p_mandir}
+%dir %{p_mandir}/man1
+%dir %{p_mandir}/man3
+%dir %{p_libdir}
+%dir %{p_libexecdir}
+%{p_bindir}/*
+%{p_libexecdir}/osu-micro-benchmarks
+%{p_mandir}/man1/*
+%{p_libdir}/*.so.*
 
 %files devel
-%dir %{_includedir}/%{namearch}
-%{_sysconfdir}/rpm/macros.%{namearch}
-%{_includedir}/%{namearch}/*
-%{_libdir}/mvapich2/bin/mpic++
-%{_libdir}/mvapich2/bin/mpicc
-%{_libdir}/mvapich2/bin/mpicxx
-%{_libdir}/mvapich2/bin/mpif77
-%{_libdir}/mvapich2/bin/mpif90
-%{_libdir}/mvapich2/bin/mpifort
-%{_libdir}/mvapich2/lib/pkgconfig
-%{_libdir}/mvapich2/lib/*.a
-%{_libdir}/mvapich2/lib/*.so
+%defattr(-,root,root)
+%dir %{p_libdir}/pkgconfig
+%{p_mandir}/man3/*
+%{p_includedir}
+%{p_libdir}/*.so
+%{p_libdir}/pkgconfig/mvapich2.pc
+%{p_libdir}/pkgconfig/openpa.pc
+%{p_libdir}/*.a
 
 %files help
-%{_docdir}/mvapich2
-%dir %{_mandir}/%{namearch}
-%dir %{_mandir}/%{namearch}/man*
-%{_mandir}/%{namearch}/man1/*
-%{_mandir}/%{namearch}/man3/*
+%defattr(-, root, root)
+%doc %{_datadir}/doc/%{name}
+%exclude /%{_datadir}/doc/%{name}/COPYRIGHT*
+%exclude /%{_datadir}/doc/%{name}/CHANGE*
 
 
 %ifarch x86_64
@@ -260,6 +236,10 @@ cd ..
 
 
 %changelog
+* Tue 15 Mar 2022 misaka00251 <misaka00251@misakanet.cn> 2.3.6-1
+- Add RISC-V support (patch by Andreas Schwab)
+- Upgrade package version
+
 * Sat 07 Aug 2021 sunguoshuai <sunguoshuai@huawei.com> - 2.3-11
 - fix build error with gcc 10,include allow mismatched arguement and multiple definition
 
