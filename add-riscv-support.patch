@@ -1,0 +1,18 @@
+--- a/src/mpid/ch3/channels/common/include/mv2_clock.h	2018-07-24 22:30:00.000000000 +0800
++++ b/src/mpid/ch3/channels/common/include/mv2_clock.h	2022-03-03 14:19:52.430980863 +0800
+@@ -92,7 +92,14 @@
+ 
+        return ret;
+ }
+-
++#elif defined(__riscv)
++typedef unsigned long cycles_t;
++static inline cycles_t get_cycles()
++{
++    unsigned long  clk;
++    asm volatile("rdcycle %0" : "=r" (clk));
++    return clk;
++}
+ #else
+ #warning get_cycles not implemented for this architecture: attempt asm/timex.h
+ #include <asm/timex.h>
