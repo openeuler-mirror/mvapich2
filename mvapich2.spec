@@ -2,7 +2,7 @@
 
 Name:            mvapich2
 Version:         2.3.6
-Release:         1
+Release:         2
 Summary:         OSU MVAPICH2 MPI package
 License:         BSD and MIT
 URL:             http://mvapich.cse.ohio-state.edu
@@ -10,6 +10,7 @@ Source:          http://mvapich.cse.ohio-state.edu/download/mvapich/mv2/mvapich2
 Source1:         mvapich2.module.in
 Source2:         mvapich2.macros.in
 Patch0010:       add-riscv-support.patch
+Patch0011:       gfortran10-allows-mismatched-arguements.patch
 BuildRequires:   gcc-gfortran python3-devel gcc-c++
 BuildRequires:   bison flex autoconf automake libtool
 BuildRequires:   perl-Digest-MD5 hwloc-devel rdma-core-devel
@@ -85,6 +86,9 @@ Help and additional documentation for mvapich2-psm2.
 cp /usr/share/automake*/config.* .
 
 %patch10 -p1
+%ifarch riscv64
+%patch11 -p1
+%endif
 
 %build
 %set_build_flags
@@ -106,7 +110,9 @@ PERL_USE_UNSAFE_INC=1 ./autogen.sh
    --with-device=ch3:psm \
    --with-psm2=/usr \
 %endif
-  --without-mpe
+  --without-mpe \
+  FFLAGS="-fallow-argument-mismatch -fPIC" \
+  FCFLAGS=-fPIC
 
 make %{?_smp_mflags} V=1
 
@@ -236,7 +242,10 @@ EOF
 
 
 %changelog
-* Tue 15 Mar 2022 misaka00251 <misaka00251@misakanet.cn> 2.3.6-1
+* Wed Mar 31 2022 misaka00251 <misaka00251@misakanet.cn> 2.3.6-2
+- Fix RISC-V support
+
+* Tue Mar 15 2022 misaka00251 <misaka00251@misakanet.cn> 2.3.6-1
 - Add RISC-V support (patch by Andreas Schwab)
 - Upgrade package version
 
